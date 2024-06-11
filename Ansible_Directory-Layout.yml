@@ -1,0 +1,140 @@
+---
+#Setting the basics 
+- name: Folder Structure Builder
+  hosts: localhost
+  become: yes
+  become_user: root
+  gather_facts: false
+
+  vars:
+    directory_gitlab: /home/automator/nrferreira_dev/PlayBooks-RA
+    directory_cfg: /etc/ansible/ansible.cfg
+    ansible_os_family:
+            - 'Debian'
+            - 'RedHat'
+
+  vars_prompt:
+    - name: project
+      prompt: Name of Playbook project?
+      private: no
+    - name: role
+      prompt: Name of Playbook role?
+      private: no
+
+  tasks:
+    - name: Create inventories directory
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/{{ item }}"
+        state: directory
+      loop:
+        - 'inventories'
+
+    - name: Create all inventories inside the directory
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/inventories/{{ item }}"
+        state: touch
+      loop:
+        - 'dev.ini'
+        - 'qua.ini'
+        - 'prd.ini'
+
+    - name: Create directories
+      ansible.builtin.file:
+        path:  "{{ directory_gitlab }}/{{ project }}/{{ item }}"
+        state: directory
+      loop:
+        - 'group_vars'
+        - 'host_vars'
+        - 'roles'
+        - 'library'
+        - 'webtier'
+        - 'monitoring'
+        - 'fooapp'
+
+    - name: Create group_vars (.yml)
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/group_vars/{{ item }}"
+        state: touch
+      loop:
+        - 'group1.yml'
+        - 'group2.yml'
+
+    - name: Create host_vars (.yml)
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/host_vars/{{ item }}"
+        state: touch
+      loop:
+        - 'hostname1.yml'
+        - 'hostname2.yml'
+
+    - name: Create library subfolders
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/library/{{ item }}"
+        state: directory
+      loop:
+        - 'module_utils'
+        - 'filter_plugins'
+
+    - name: Create runner.yml
+      file:
+        path:  "{{ directory_gitlab }}/{{ project }}/{{ item }}"
+        state: touch
+      loop:
+        - 'runner.yml'
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ directory_gitlab }}/{{ project }}/roles/{{ role }}/{{ item }}"
+        state: directory
+      loop:
+        - 'tasks'
+        - 'handlers'
+        - 'templates'
+        - 'files'
+        - 'vars'
+        - 'defaults'
+        - 'meta'
+        - 'library'
+        - 'module_utils'
+        - 'lookup_plugins'
+
+    - name: Create files
+      file:
+        path: "{{ directory_gitlab }}/{{ project }}/roles/{{ role }}/{{ item }}"
+        state: touch
+      loop:
+        - tasks/main.yml
+        - handlers/main.yml
+        - templates/ntp.conf.j2
+        - files/bar.txt
+        - files/foo.sh
+        - vars/main.yml
+        - defaults/main.yml
+        - meta/main.yml
+
+    - name: Copy ansible.cfg
+      copy:
+        src: "{{ directory_cfg }}"
+        dest: "{{ directory_gitlab }}/{{ project }}/ansible.cfg"
+
+    - name: Install tree
+      apt:
+        name: tree
+        state: present
+      become: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install tree
+      yum:
+        name: tree
+        state: present
+      become: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Show directory structure
+      command: tree "{{ directory_gitlab }}/{{ project }}"
+      register: tree_result
+
+    - debug: var=tree_result.stdout_lines
+
+
