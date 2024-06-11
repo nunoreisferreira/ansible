@@ -1,18 +1,18 @@
 ---
-#Setting the basics 
+#Setting the basics of a playbook 
 - name: Folder Structure Builder
-  hosts: localhost
+  hosts: localhost 
   become: yes
   become_user: root
   gather_facts: false
-
+#Setting vars to simplify the process of the tasks and to simplify the reading of the code
   vars:
     directory_gitlab: /home/automator/nrferreira_dev/PlayBooks-RA
     directory_cfg: /etc/ansible/ansible.cfg
     ansible_os_family:
             - 'Debian'
             - 'RedHat'
-
+#Setting prompts to ask the user to put the name of the project and the role of the playbook
   vars_prompt:
     - name: project
       prompt: Name of Playbook project?
@@ -22,13 +22,15 @@
       private: no
 
   tasks:
+  #Creating the directories of a Ansible Folder Structure
     - name: Create inventories directory
       ansible.builtin.file:
         path: "{{ directory_gitlab }}/{{ project }}/{{ item }}"
         state: directory
       loop:
         - 'inventories'
-
+  #We're setting here the environment of a playbook, because we obviously don't do it the changes on the production environment. 
+  #We need to separate the environments to test if the works, if it has good quality to finally think to put in the production section. 
     - name: Create all inventories inside the directory
       ansible.builtin.file:
         path: "{{ directory_gitlab }}/{{ project }}/inventories/{{ item }}"
@@ -37,7 +39,7 @@
         - 'dev.ini'
         - 'qua.ini'
         - 'prd.ini'
-
+  #These loops are so good to make many dirs and to reduce the code.
     - name: Create directories
       ansible.builtin.file:
         path:  "{{ directory_gitlab }}/{{ project }}/{{ item }}"
@@ -50,7 +52,7 @@
         - 'webtier'
         - 'monitoring'
         - 'fooapp'
-
+  #Here we are putting some .yml files inside of the dirs.
     - name: Create group_vars (.yml)
       ansible.builtin.file:
         path: "{{ directory_gitlab }}/{{ project }}/group_vars/{{ item }}"
@@ -58,7 +60,7 @@
       loop:
         - 'group1.yml'
         - 'group2.yml'
-
+  
     - name: Create host_vars (.yml)
       ansible.builtin.file:
         path: "{{ directory_gitlab }}/{{ project }}/host_vars/{{ item }}"
@@ -66,7 +68,7 @@
       loop:
         - 'hostname1.yml'
         - 'hostname2.yml'
-
+  
     - name: Create library subfolders
       ansible.builtin.file:
         path: "{{ directory_gitlab }}/{{ project }}/library/{{ item }}"
@@ -74,7 +76,8 @@
       loop:
         - 'module_utils'
         - 'filter_plugins'
-
+  #"The Harry Potter of the playbooks".
+  #This .yml file will run the roles. 
     - name: Create runner.yml
       file:
         path:  "{{ directory_gitlab }}/{{ project }}/{{ item }}"
@@ -111,12 +114,15 @@
         - vars/main.yml
         - defaults/main.yml
         - meta/main.yml
-
+  #The ansible configuration file.
+  #I just copy the original ansible.cfg, because it's easy to bring the starter file and the user will putting the configs along of the journey.
     - name: Copy ansible.cfg
       copy:
         src: "{{ directory_cfg }}"
         dest: "{{ directory_gitlab }}/{{ project }}/ansible.cfg"
-
+  #To me tree is the plus of this playbook, because who doesn´t want to see the result of Directory Layout?
+  #So, there is!
+  #It also gonna check the OS of the machine
     - name: Install tree
       apt:
         name: tree
@@ -130,7 +136,7 @@
         state: present
       become: yes
       when: ansible_os_family == "RedHat"
-
+#Finally, he gonna show us the finally result with a beautiful "debug" :) 
     - name: Show directory structure
       command: tree "{{ directory_gitlab }}/{{ project }}"
       register: tree_result
