@@ -1,0 +1,37 @@
+---
+
+- name: Verify the OS to choose the proxy config
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: false
+
+  vars_files:
+    - vars.yml # Include ubuntu & redhat vars 
+      #proxy_url: http://....:port
+      #path_env: /etc/environment
+      #path_wget: /etc/wgetrc
+      #path_yum: /etc/yum.conf
+      #path_apt: /etc/apt/apt.conf
+      #path_curl: /etc/curl/curlrc
+      #path_dnf: /etc/dnf/dnf.conf
+      #path_rhsm: /etc/rhsm/rhsm.conf
+      #ca_cert_file_r: redhat cert
+      #ca_cert_file: ubuntu cert
+
+  tasks:
+
+    - name: Verify OS
+      ansible.builtin.setup:
+
+    - name: Debug OS
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts['distribution'] }} OS | (Family: {{ ansible_facts['os_family'] }}) | Proxy was called!"
+
+    - name: Ubuntu Proxy
+      include_tasks: main_ubuntu.yml
+      when: ansible_facts['os_family'] == 'Debian'
+
+    - name: RedHat Proxy
+      include_tasks: main_redhat.yml
+      when: ansible_facts['os_family'] == 'RedHat'
