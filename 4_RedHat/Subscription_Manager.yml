@@ -1,0 +1,22 @@
+---
+
+- name: Subscription Manager -> Regist and attach license
+  hosts: redhat
+  become: yes
+  become_user: root
+  gather_facts: false
+
+  vars:
+    mail_user: software.admin@gmail.com
+    passwd: Admin!123
+
+  tasks:
+
+    - name: System Registration
+      command:
+        cmd: "subscription-manager register --username {{mail_user}} --password {{passwd}}"
+      ignore_errors: true
+
+    - name: License Attach
+      command:
+        cmd: "subscription-manager attach"
