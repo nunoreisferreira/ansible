@@ -1,0 +1,111 @@
+---
+
+- name: Proxy_RedHat
+  hosts: redhat
+  become: yes
+  become_user: root
+  gather_facts: true
+
+  vars:
+  proxy_url: http:// .... :port
+  path_env: /etc/environment
+  path_wget: /etc/wgetrc
+  path_yum: /etc/yum.conf
+  path_curl: /etc/curl/curlrc
+  path_dnf: /etc/dnf/dnf.conf
+  path_rhsm: /etc/rhsm/rhsm.conf
+  ca_cert_file: /etc/pki/ca-trust/source/whitelist/<certificate-file.crt>
+
+  tasks:
+    - name: Config_Proxy_RedHat
+      block:
+      - name: Config Proxy Variables
+        ansible.builtin.lineinfile:
+          path: "{{ path_env }}"
+          line: "{{ item.key }}={{ proxy_url }}"
+          create: yes
+        loop:
+          - { key: "http_proxy" }
+          - { key: "https_proxy" }
+          - { key: "ftp_proxy" }
+
+      - name: PROXY_YUM
+        ansible.builtin.lineinfile:
+          path: "{{ path_yum }}"
+          line: "proxy={{ proxy_url }}"
+          create: yes
+
+      - name: PROXY_WGET
+        ansible.builtin.lineinfile:
+          path: "{{ path_wget }}"
+          line: "http_proxy = {{ proxy_url }}"
+          create: yes
+
+      - name: PROXY_CURL
+        ansible.builtin.lineinfile:
+          path: "{{ path_curl }}"
+          line: "proxy = {{ proxy_url }}"
+          create: yes
+
+      - name: PROXY_DNF
+        ansible.builtin.lineinfile:
+          path: "{{ path_dnf }}"
+          line: "proxy={{ proxy_url }}"
+          create: yes
+
+    - name: Config Proxy on rhsm file
+      block:
+        - name: Config Proxy Variables
+          ansible.builtin.lineinfile:
+            path: "{{ path_rhsm }}"
+            line: "{{ item.line }}"
+            regexp: "{{ item.regexp }}"
+            state: present
+            create: yes
+          loop:
+            - { line: 'proxy_hostname = ....', regexp: '^#?proxy_hostname =' }
+            - { line: 'proxy_port = 9480', regexp: '^#?proxy_port =' }
+
+    - name: Create whitelist folder
+      ansible.builtin.file:
+        path: "/etc/pki/ca-trust/source/{{item}}"
+        state: directory
+        create: yes
+      loop:
+        - 'whitelist'
+
+    - name: Download file from https://....
+      ansible.builtin.get_url:
+        url: https://......<certicate_file.crt>
+        dest: "{{ ca_cert_file }}"
+        validate_certs: false
+        use_proxy: no
+
+    - name: Update_CA_certificates
+      ansible.builtin.command: update-ca-trust
+
+    - name: Validate internet access through proxy
+      ansible.builtin.uri:
+        url: http://www.google.com
+        use_proxy: yes
+        validate_certs: false
+        register: result
+
+    - name: Set email body content based on internet access result
+      set_fact:
+        email_body: |
+          Ansible playbook execution report:
+
+          Internet access through proxy: {{
+          'Success' if result.status == 200 else 'Failure' }}
+
+    - name: Send Email Notification
+      community.general.mail:
+        host: mail_main@gmail.com
+        port: 25  # Update with your SMTP server's port
+        to: mail_2@gmail.com
+        from: mail_1@gmail.com
+        subject: Ansible Playbook Execution Report - Proxy Config - {{ ansible_hostname }}
+        body: "{{ email_body }}"
+      delegate_to: localhost  # Execute the task on the control node
+      become: false
