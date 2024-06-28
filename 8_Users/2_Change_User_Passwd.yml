@@ -1,0 +1,20 @@
+---
+
+- name: Change pwd of users
+  hosts: redhat
+  become: yes
+  gather_facts: false
+
+  vars_files:
+    - db_users.yml
+
+  vars:
+    pwd: "Vitoria!123"
+
+  tasks:
+
+    - name: Change Users Passwd
+      user:
+        name: "{{ item.nome }}"
+        password: "{{ pwd | password_hash('sha512') }}"
+      with_items: "{{ db_users }}"
