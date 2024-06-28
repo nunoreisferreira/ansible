@@ -1,0 +1,21 @@
+---
+
+- name: Criar Users
+  hosts: all
+  become: yes
+  gather_facts: false
+
+  vars_files:
+    - db_users.yml
+
+  vars:
+    pwd: "Vitoria123"
+
+  tasks:
+    - name: Criar Users
+      user:
+        name: "{{ item.nome }}"
+        password: "{{ pwd | password_hash('sha512') }}"
+        state: present
+        shell: /bin/bash
+        with_items: "{{ db_users }}"
