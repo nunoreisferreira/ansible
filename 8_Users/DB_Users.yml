@@ -1,0 +1,7 @@
+---
+
+db_users:
+  - nome: Alice
+  - nome: Bob
+  - nome: Carol
+  - nome: Dave
