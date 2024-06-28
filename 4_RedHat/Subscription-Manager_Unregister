@@ -1,0 +1,21 @@
+---
+- name: Executar comando SSH com depuração
+  hosts: redhat
+  become: yes
+  gather_facts: false
+
+  vars:
+    mail_user: software.admin@gmail.com
+    pwd: 
+
+  tasks:
+
+    - name: Remover Subscrição
+      community.general.redhat_subscription:
+        state: absent
+        username: "{mail_user}"
+        password: "{pwd}"
+
+    - name: Limpar Subscrição
+      command:
+        cmd: "subscription-manager clean"
