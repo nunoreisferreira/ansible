@@ -1,0 +1,37 @@
+---
+#In RedHat the ntp package is chrony
+#In RedHat the ntp service is chronyd
+- name: Check NTP_Chrony Config
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+
+    - name: Check NTP_Chrony Config
+      command: chronyc sources
+      register: chrony_status
+      ignore_errors: true #We need to ignore to catch them.
+
+    - name: Create NTP_Chrony Results File If Not Exists
+      ansible.builtin.file:
+        path: "/tmp/chrony_results.txt"
+        state: touch
+      delegate_to: localhost
+
+    - name: Append NTP_Chrony Config to Text File
+      ansible.builtin.lineinfile:
+        dest: "/tmp/chrony_results.txt"
+        line: "{{ inventory_hostname }} NTP Servers:"
+        create: yes
+      delegate_to: localhost
+
+    - name: Format NTP_Chrony Data and Append to Text File
+      ansible.builtin.blockinfile:
+        dest: "/tmp/chrony_results.txt"
+        marker: "# {mark} ANSIBLE NTP_CHRONY BLOCK - {{ inventory_hostname }}"
+        block: |
+          {% for line in chrony_status.stdout_lines[2:] %}
+          {{ line }}
+          {% endfor %}
+        create: yes  # Set to 'yes' to create the block even if it doesn't exist
+      delegate_to: localhost
