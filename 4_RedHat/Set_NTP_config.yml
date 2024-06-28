@@ -1,0 +1,49 @@
+---
+
+- name: Configure NTP_Chrony on RedHat Servers
+  hosts: all
+  become: yes
+
+  vars_files:
+      - vars_chrony.yml ## Here we have the ntp-servers IP's
+
+  tasks:
+
+    - name: Remove existing NTP_Chrony servers and pools from ntp.conf
+      block:
+
+        - name: Remove existing NTP servers
+          lineinfile:
+            path: /etc/chrony.conf
+            regexp: '^server '
+            state: absent
+          ignore_errors: yes
+
+        - name: Remove existing NTP servers
+          lineinfile:
+            path: /etc/chrony.conf
+            regexp: '^pool '
+            state: absent
+          ignore_errors: yes
+
+    - name: Configure NTP_Chrony servers
+      ansible.builtin.blockinfile:
+        path: /etc/chrony.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - NTP Servers"
+        block: |
+          {% for server in ntp_servers %}
+          server {{ server }} iburst
+          {% endfor %}
+
+    - name: Ensure the Chrony service is enabled and started
+      service:
+        name: chronyd
+        enabled: yes
+        state: started
+
+    - name: Restart Chrony service
+      service:
+        name: chronyd
+        state: restarted
+
+
