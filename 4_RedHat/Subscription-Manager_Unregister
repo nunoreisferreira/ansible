@@ -6,7 +6,7 @@
 
   vars:
     mail_user: software.admin@gmail.com
-    pwd: 
+    pwd: Admin!123
 
   tasks:
 
