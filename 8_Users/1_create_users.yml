@@ -1,6 +1,6 @@
 ---
 
-- name: Criar Users
+- name: Create Users based on db_users.yml
   hosts: all
   become: yes
   gather_facts: false
@@ -12,7 +12,7 @@
     pwd: "Vitoria123"
 
   tasks:
-    - name: Criar Users
+    - name: Create Users
       user:
         name: "{{ item.nome }}"
         password: "{{ pwd | password_hash('sha512') }}"
