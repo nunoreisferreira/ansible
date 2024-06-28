@@ -1,0 +1,33 @@
+---
+
+- name: Install and register Checkmk
+  hosts: redhat
+  become: yes  #Run tasks with sudo (root) privileges
+  become_user: root
+  become_method: sudo
+
+  vars:
+    checkmk_package: "package_name.rpm"
+    checkmk_server: "server_name"
+    agent_uuid: "agent_uuid"
+
+  tasks:
+
+    - name: Copy cmk_agent file
+      copy:
+        src: /tmp/{{checkmk_package}}
+        dest: /tmp/
+
+    - name: Install Checkmk agent
+      command:
+        cmd: rpm -ivh /tmp/{{checkmk_package}}
+      ignore_errors: true
+
+    - name: Register hostname with Checkmk
+      command:
+        cmd: cmk-update-agent register -U automation -S "{{ agent_uuid }}" -s "{{ checkmk_server }}" -H "{{ ansible_hostname }}"
+      ignore_errors: false 
+
+    - name: Checkmk_Agent Version Status
+      command: sudo cmk-update-agent -v
+
