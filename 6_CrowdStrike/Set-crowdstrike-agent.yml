@@ -1,0 +1,50 @@
+---
+#Working on ubuntu config....
+- name: CrowdStrike Install & Configuration
+  hosts: redhat
+  become: yes
+  become_user: root
+  become_method: enable
+
+  vars:
+    falcon_sensor_rpm: "falcon-sensor-________.rpm"
+    cid_number: "cid_number"
+
+  tasks:
+
+    - name: Copy falcon-sensor to hosts
+      copy:
+        src: "/tmp/{{falcon_sensor_rpm}}"
+        dest: /tmp/
+
+    - name: Instalar o pacote falcon-sensor
+      ansible.builtin.shell:
+        cmd: "sudo rpm -i /tmp/{{falcon-sensor.rpm}} "
+      ignore_errors: true
+
+    - name: Install with REN Key
+      ansible.builtin.shell:
+        cmd: "sudo /opt/CrowdStrike/falconctl -s --cid={{cid_number}}"
+      ignore_errors: true
+
+    - name: Iniciar o serviço falcon-sensor
+      ansible.builtin.shell:
+        cmd: "sudo service falcon-sensor start"
+
+    - name: Verificar processos relacionados ao falcon
+      ansible.builtin.shell:
+        cmd: "ps -ef | grep falcon"
+      register: falcon_processes
+
+    - name: Exibir processos do falcon
+      ansible.builtin.debug:
+        var: falcon_processes.stdout_lines
+
+    - name: Verificar status do serviço falcon
+      ansible.builtin.shell:
+        cmd: "systemctl --type=service --state=running | grep falcon"
+      register: falcon_service_status
+
+    - name: Exibir status do serviço falcon
+      ansible.builtin.debug:
+        var: falcon_service_status.stdout_lines
