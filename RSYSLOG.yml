@@ -1,0 +1,57 @@
+---
+#It works to Ubuntu & RedHat
+- name: Manage rsyslog config
+  hosts: all
+  become: yes
+  vars:
+    rsyslog_changes: []
+
+  tasks:
+    - name: Backup rsyslog.conf
+      command: cp /etc/rsyslog.conf /etc/rsyslog.conf.backup
+      args:
+        creates: /etc/rsyslog.conf.backup
+      changed_when: false
+    
+    - name: Check if the line exists
+      command: grep -q '^\*\.emerg,\*\.alert,\*\.crit,\*\.warning,\*\.err,\*\.notice,\*\.info @@172.21.32.94$' /etc/rsyslog.conf
+      register: grep_result
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Remove duplicate lines
+      lineinfile:
+        path: /etc/rsyslog.conf
+        regexp: '^\*\.emerg,\*\.alert,\*\.crit,\*\.warning,\*\.err,\*\.notice,\*\.info @@172.21.32.94$'
+        state: absent
+      when: grep_result.rc == 0
+      register: remove_result
+
+    - name: Record changes
+      set_fact:
+        rsyslog_changes: "{{ rsyslog_changes + [item] }}"
+      when: remove_result.changed
+      loop:
+        - "Duplicate lines removed from rsyslog.conf"
+
+    - name: Add the line if it doesn't exist
+      blockinfile:
+        path: /etc/rsyslog.conf
+        block: |
+          *.emerg,*.alert,*.crit,*.warning,*.err,*.notice,*.info @@172.21.32.94
+
+    - name: Restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted
+      when: remove_result.changed or grep_result.rc != 0
+
+    - name: Log the operation
+      debug:
+        var: rsyslog_changes
+
+    - name: Fail if no changes were made
+      fail:
+        msg: "No changes were made to rsyslog.conf"
+      when: rsyslog_changes|length == 0
+
