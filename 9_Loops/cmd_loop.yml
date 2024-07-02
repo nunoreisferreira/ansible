@@ -1,0 +1,13 @@
+---
+
+- name: Command loop
+  hosts: all
+  become: yes
+  become_user: root
+  
+  tasks:
+    - name: Execute commands # He will loop until the end of the command/loop list
+      command: "{{ item }}"
+      loop:
+        - sudo apt update
+        - sudo apt upgrade -y
