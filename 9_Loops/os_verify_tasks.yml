@@ -1,0 +1,31 @@
+---
+
+- name: Verify OS of Machine to run specific tasks
+  hosts: all
+  become: yes
+  become_user: root
+  gather_facts: false
+
+  tasks:
+
+    - name: Verify OS #Asking to OS what is the distribution 
+      ansible.builtin.setup:
+
+    - name: Debug OS #Debug the answer of Verify OS
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts['distribution'] }} OS | (Family: {{ ansible_facts['os_family'] }}) | was called!"
+        
+# If the answer is one of these OS, he will run the specific tasks for this OS
+    - name: Ubuntu
+      include_tasks: "{{item}}"
+      when: ansible_facts['os_family'] == 'Debian'
+      loop:
+        - test1.yml
+        - test2.yml
+
+    - name: RedHat
+      include_tasks: "{{item}}"
+      when: ansible_facts['os_family'] == 'RedHat'
+      loop:
+        - test3.yml
+        - test4.yml
