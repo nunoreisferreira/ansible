@@ -22,7 +22,7 @@
         cmd: "sudo rpm -i /tmp/{{falcon-sensor.rpm}} "
       ignore_errors: true
 
-    - name: Install with REN Key
+    - name: Install with System Key
       ansible.builtin.shell:
         cmd: "sudo /opt/CrowdStrike/falconctl -s --cid={{cid_number}}"
       ignore_errors: true
