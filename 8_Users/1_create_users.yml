@@ -1,21 +1,20 @@
 ---
 
-- name: Create Users based on db_users.yml
+- name: Create Users based on 0_db_users.yml
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
 
   vars_files:
-    - db_users.yml
-
-  vars:
-    pwd: "Vitoria123"
+    - 0_db_users.yml
+    - vault_users.yml
 
   tasks:
-    - name: Create Users
-      user:
+    - name: Create users from db_users list
+      ansible.builtin.user:
         name: "{{ item.nome }}"
-        password: "{{ pwd | password_hash('sha512') }}"
+        password: "{{ users_pwd | password_hash('sha512', (item.nome | hash('sha1'))[:16]) }}"
         state: present
         shell: /bin/bash
-        with_items: "{{ db_users }}"
+      loop: "{{ db_users }}"
+      no_log: true

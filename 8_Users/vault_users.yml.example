@@ -1,0 +1,4 @@
+---
+# Copiar para vault_users.yml, definir a password real e cifrar com:
+#   ansible-vault encrypt 8_Users/vault_users.yml
+users_pwd: "CHANGE_ME"
