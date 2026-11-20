@@ -21,6 +21,12 @@ Fluxo por defeito para qualquer alteração não trivial:
 
 Tarefas triviais (uma pergunta, uma linha) fazem-se diretamente, sem delegar.
 
+### Dynamic workflows / ultracode
+
+Ao usar dynamic workflows ou ultracode, mantém o planeamento e a revisão final no modelo principal (Opus), delega a implementação de código para subagentes Sonnet e usa Haiku para leitura/pesquisa de ficheiros, testes e tarefas mecânicas. Limita o paralelismo ao mínimo necessário.
+
+Configuração do projeto em `.claude/settings.json`: subagentes por omissão em Sonnet (`CLAUDE_CODE_SUBAGENT_MODEL`) e `workflowSizeGuideline` em `small` (menos de 5 agentes). Os agentes em `.claude/agents/` definem o seu próprio `model`, por isso não são afetados pela variável.
+
 ## Convenções
 
 - YAML com `---` no topo e indentação de 2 espaços.
